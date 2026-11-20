@@ -299,7 +299,12 @@ export const HRISProvider: React.FC<{ children: React.ReactNode }> = ({
         `${STORAGE_KEY_PREFIX}permissions`,
         null
       );
-      if (parsed && parsed['role_manager_mkt']) {
+      if (
+        parsed &&
+        parsed['role_manager_mkt'] &&
+        parsed['role_staff_fin'] &&
+        parsed['role_staff_fin'].includes('view_kanban')
+      ) {
         return parsed;
       }
     } catch {

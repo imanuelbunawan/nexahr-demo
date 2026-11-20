@@ -854,28 +854,32 @@ export const HRISProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const logout = useCallback(() => {
-    const loggingOutUser = currentUser;
-    const targetRole = roles.find((r) => r.id === loggingOutUser.roleId);
+    // Bersihkan seluruh penyimpanan lokal browser agar data kembali ke awal (static demo data)
+    safeClearStorage();
 
+    // Reset seluruh state data kembali ke data awal (INITIAL DATA)
+    setDepartments(INITIAL_DEPARTMENTS);
+    setRoles(INITIAL_ROLES);
+    setRolePermissions(INITIAL_ROLE_PERMISSIONS);
+    setUsers(INITIAL_USERS);
+    setCurrentUser(INITIAL_USERS[0]);
+    setLeaveBalances(INITIAL_LEAVE_BALANCES);
+    setLeaveRequests(INITIAL_LEAVE_REQUESTS);
+    setReimbursements(INITIAL_REIMBURSEMENTS);
+    setNotifications(INITIAL_NOTIFICATIONS);
+    setTasks(INITIAL_TASKS);
+    setAuditLogs(INITIAL_AUDIT_LOGS);
+    setAttendances(INITIAL_ATTENDANCE);
+    setOvertimeRequests(INITIAL_OVERTIME_REQUESTS);
+    setPayrolls(INITIAL_PAYROLLS);
+    setActiveSocketToasts([]);
+    setPendingOfflineActions([]);
+    setLastSyncedAt(null);
+
+    // Set status sesi keluar
     setIsAuthenticated(false);
     safeSetStorage(`${STORAGE_KEY_PREFIX}is_authenticated`, 'false');
-
-    addAuditLog({
-      actorId: loggingOutUser.id,
-      actorName: loggingOutUser.name,
-      actorRole: targetRole?.label || 'Pengguna',
-      actorAvatar: loggingOutUser.avatar,
-      category: 'security',
-      action: 'USER_LOGOUT',
-      actionTitle: 'Sesi Autentikasi Keluar',
-      targetId: loggingOutUser.id,
-      targetType: 'user',
-      targetName: `${loggingOutUser.name} (${loggingOutUser.email})`,
-      description: `Pengguna ${loggingOutUser.name} telah keluar dari portal sesi NexaHR.`,
-      severity: 'info',
-      ipAddress: '192.168.1.12 (Session Aktif)',
-    });
-  }, [currentUser, roles, addAuditLog]);
+  }, []);
 
   const resetUserPassword = useCallback(
     async (identifier: string) => {

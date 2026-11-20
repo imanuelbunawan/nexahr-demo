@@ -228,7 +228,7 @@ interface HRISContextType {
 
 const HRISContext = createContext<HRISContextType | undefined>(undefined);
 
-const STORAGE_KEY_PREFIX = 'nexahr_enterprise_v2_';
+const STORAGE_KEY_PREFIX = 'nexahr_enterprise_v4_';
 
 // Resilient localStorage helpers for sandboxed iframe environments
 function safeLoadStorage<T>(key: string, defaultValue: T): T {
@@ -283,9 +283,13 @@ export const HRISProvider: React.FC<{ children: React.ReactNode }> = ({
     safeLoadStorage(`${STORAGE_KEY_PREFIX}depts`, INITIAL_DEPARTMENTS)
   );
 
-  const [roles, setRoles] = useState<Role[]>(() =>
-    safeLoadStorage(`${STORAGE_KEY_PREFIX}roles`, INITIAL_ROLES)
-  );
+  const [roles, setRoles] = useState<Role[]>(() => {
+    const loaded = safeLoadStorage(`${STORAGE_KEY_PREFIX}roles`, INITIAL_ROLES);
+    if (!loaded.some((r) => r.id === 'role_finance')) {
+      return INITIAL_ROLES;
+    }
+    return loaded;
+  });
 
   const [rolePermissions, setRolePermissions] = useState<
     Record<string, string[]>
@@ -295,23 +299,8 @@ export const HRISProvider: React.FC<{ children: React.ReactNode }> = ({
         `${STORAGE_KEY_PREFIX}permissions`,
         null
       );
-      if (parsed) {
-        // Seamlessly merge new core module permissions (like kanban) if not present
-        const merged: Record<string, string[]> = { ...parsed };
-        for (const [roleId, initialPerms] of Object.entries(INITIAL_ROLE_PERMISSIONS)) {
-          if (merged[roleId]) {
-            const set = new Set(merged[roleId]);
-            for (const p of initialPerms) {
-              if (p.includes('kanban') || p.includes('attendance') || p.includes('payroll')) {
-                set.add(p);
-              }
-            }
-            merged[roleId] = Array.from(set);
-          } else {
-            merged[roleId] = initialPerms;
-          }
-        }
-        return merged;
+      if (parsed && parsed['role_finance']) {
+        return parsed;
       }
     } catch {
       return INITIAL_ROLE_PERMISSIONS;

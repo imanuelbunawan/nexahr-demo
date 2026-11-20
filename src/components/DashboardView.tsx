@@ -66,6 +66,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     hasUserPermission('view_approval') ||
     currentUser.roleId === 'role_owner' ||
     currentUser.roleId === 'role_hrd' ||
+    currentUser.roleId === 'role_finance' ||
     currentUser.roleId === 'role_manager';
 
   // Scope filter: 'dept' (Sesuai Divisi Saya) vs 'my' (Pengajuan Saya) vs 'all' (Seluruh Divisi)

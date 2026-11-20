@@ -63,7 +63,9 @@ export const PayrollView: React.FC = () => {
   const canApprovePayroll = hasUserPermission('approve_payroll');
   const canDeletePayroll = hasUserPermission('delete_payroll');
   const isOwnerOrHrd =
-    currentUser.roleId === 'role_owner' || currentUser.roleId === 'role_hrd';
+    currentUser.roleId === 'role_owner' ||
+    currentUser.roleId === 'role_hrd' ||
+    currentUser.roleId === 'role_finance';
 
   // If normal employee, only show their own payslips
   const displayedRecords = isOwnerOrHrd

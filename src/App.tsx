@@ -179,7 +179,7 @@ function MainApp() {
         onOpenExportModal={() => setIsGlobalExportModalOpen(true)}
       />
 
-      <div className="flex-1 max-w-7xl w-full mx-auto flex">
+      <div className="flex-1 w-full flex">
         {/* Dynamic RBAC Sidebar */}
         <Sidebar
           currentModule={currentModule}

@@ -565,25 +565,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccessLogin }) => {
         </div>
       </main>
 
-      {/* Footer - Visible in full-page view without requiring scrolling down */}
-      <footer className="shrink-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400 dark:text-slate-500 border-t border-slate-200/60 dark:border-slate-800/60">
-        <div>
-          &copy; {new Date().getFullYear()} PT. Nexa Digital Persada &bull; NexaHR Enterprise Information System
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">
-            Kebijakan Privasi
-          </span>
-          <span>&bull;</span>
-          <span className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">
-            Ketentuan Layanan
-          </span>
-          <span>&bull;</span>
-          <span className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">
-            Status Sistem Operasional
-          </span>
-        </div>
-      </footer>
+
 
       {/* Interactive Reset Password Modal (Default Password: 123456) */}
       {showResetModal && (

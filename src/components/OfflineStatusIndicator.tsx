@@ -79,7 +79,7 @@ export const OfflineStatusIndicator: React.FC = () => {
               : 'bg-amber-50 border-amber-200 text-amber-900'
           }`}
         >
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
+          <div className="w-full px-3 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
             <div className="flex items-center gap-2.5 min-w-0">
               <span className="relative flex h-2.5 w-2.5 shrink-0">
                 <span

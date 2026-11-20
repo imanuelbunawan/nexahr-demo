@@ -3,6 +3,7 @@ import { useHRIS } from '../context/HRISContext.tsx';
 import { useTheme } from '../context/ThemeContext.tsx';
 import {
   Shield,
+  ShieldCheck,
   Lock,
   Mail,
   Eye,
@@ -325,9 +326,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccessLogin }) => {
                 <Building2 className="w-3.5 h-3.5" />
                 PT. Nexa Digital Persada
               </span>
-              <span className="font-semibold text-emerald-400 flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                ISO 27001 Certified
+              <span className="font-semibold text-emerald-400 flex items-center gap-1.5" title="Mengimplementasikan standar keamanan enterprise & prinsip Least Privilege">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                Enterprise Security Standards
               </span>
             </div>
           </div>

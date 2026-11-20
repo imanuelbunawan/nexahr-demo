@@ -1206,6 +1206,25 @@ export const HRISProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const updateUserRole = (userId: string, roleId: string) => {
     const targetUser = users.find((u) => u.id === userId);
+    
+    // Strict Privilege Escalation Protection: Only Owner can modify an Owner's role
+    if (
+      (targetUser?.roleId === 'role_owner' || targetUser?.id === 'user_owner') &&
+      currentUser.roleId !== 'role_owner'
+    ) {
+      addAuditLog({
+        category: 'security',
+        action: 'UPDATE_USER_ROLE',
+        actionTitle: 'Upaya Pelanggaran Otorisasi Dicegah',
+        targetId: userId,
+        targetType: 'user',
+        targetName: targetUser?.name || 'Super Admin',
+        description: `Upaya tidak sah dari ${currentUser.name} (${currentUser.roleId}) untuk mengubah role Super Admin / Owner berhasil diblokir.`,
+        severity: 'critical',
+      });
+      return;
+    }
+
     const oldRole = roles.find((r) => r.id === targetUser?.roleId);
     const newRole = roles.find((r) => r.id === roleId);
 
@@ -1242,6 +1261,15 @@ export const HRISProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const updateLeaveQuota = (userId: string, newQuota: number) => {
     const targetUser = users.find((u) => u.id === userId);
+
+    // Protect Super Admin / Owner from unauthorized quota alterations
+    if (
+      (targetUser?.roleId === 'role_owner' || targetUser?.id === 'user_owner') &&
+      currentUser.roleId !== 'role_owner'
+    ) {
+      return;
+    }
+
     const oldBalance = leaveBalances.find((b) => b.userId === userId);
 
     setLeaveBalances((prev) =>

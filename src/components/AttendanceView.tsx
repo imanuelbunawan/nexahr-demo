@@ -101,10 +101,32 @@ export const AttendanceView: React.FC = () => {
     (a) => a.userId === currentUser.id && a.date === todayStr
   );
 
-  const stats = calculateAttendanceStats(attendances);
+  // Hierarchy-based data visibility scoping
+  const isOwnerOrHRD = currentUser.roleId === 'role_owner' || currentUser.roleId === 'role_hrd';
+  const isDeptManager = currentUser.roleId === 'role_manager';
+
+  const accessibleAttendances = attendances.filter((item) => {
+    if (isOwnerOrHRD) return true;
+    if (isDeptManager) {
+      const u = users.find((usr) => usr.id === item.userId);
+      return (u && u.departmentId === currentUser.departmentId) || item.userId === currentUser.id;
+    }
+    return item.userId === currentUser.id;
+  });
+
+  const accessibleOvertimeRequests = overtimeRequests.filter((item) => {
+    if (isOwnerOrHRD) return true;
+    if (isDeptManager) {
+      const u = users.find((usr) => usr.id === item.userId);
+      return (u && u.departmentId === currentUser.departmentId) || item.userId === currentUser.id;
+    }
+    return item.userId === currentUser.id;
+  });
+
+  const stats = calculateAttendanceStats(accessibleAttendances);
 
   // Filtered daily attendance
-  const filteredAttendance = filterAttendanceRecords(attendances, users, {
+  const filteredAttendance = filterAttendanceRecords(accessibleAttendances, users, {
     searchQuery,
     departmentId: selectedDeptId,
     workType: selectedWorkType,
@@ -492,7 +514,7 @@ export const AttendanceView: React.FC = () => {
           }`}
         >
           <Clock className="w-4 h-4" />
-          <span>Pengajuan Lembur / Overtime ({overtimeRequests.length})</span>
+          <span>Pengajuan Lembur / Overtime ({accessibleOvertimeRequests.length})</span>
         </button>
       </div>
 
@@ -689,7 +711,7 @@ export const AttendanceView: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {overtimeRequests.length === 0 ? (
+                  {accessibleOvertimeRequests.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="py-12 text-center text-slate-400">
                         <Clock className="w-8 h-8 mx-auto mb-2 opacity-40" />
@@ -697,7 +719,7 @@ export const AttendanceView: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    overtimeRequests.map((ot) => {
+                    accessibleOvertimeRequests.map((ot) => {
                       const u = users.find((usr) => usr.id === ot.userId);
                       const d = departments.find((dept) => dept.id === u?.departmentId);
 

@@ -108,8 +108,24 @@ export const LeaveView: React.FC<LeaveViewProps> = ({
     onCloseModal();
   };
 
+  // Hierarchy-based data visibility scoping
+  const isOwnerOrHRD = currentUser.roleId === 'role_owner' || currentUser.roleId === 'role_hrd';
+  const isDeptManager = currentUser.roleId === 'role_manager';
+
+  const accessibleLeaveRequests = leaveRequests.filter((item) => {
+    // Owner and HRD have company-wide visibility
+    if (isOwnerOrHRD) return true;
+    // Department Manager can only see subordinates in their department or themselves
+    if (isDeptManager) {
+      const applicant = users.find((u) => u.id === item.userId);
+      return (applicant && applicant.departmentId === currentUser.departmentId) || item.userId === currentUser.id;
+    }
+    // Technical Staff / General Employee can ONLY see their own data
+    return item.userId === currentUser.id;
+  });
+
   // Filter requests
-  const filteredRequests = leaveRequests.filter((item) => {
+  const filteredRequests = accessibleLeaveRequests.filter((item) => {
     // Tab filter
     if (activeTab === 'mine' && item.userId !== currentUser.id) return false;
     if (activeTab === 'pending' && !(item.status === 'PENDING_MANAGER' || item.status === 'PENDING_HRD'))
@@ -214,7 +230,7 @@ export const LeaveView: React.FC<LeaveViewProps> = ({
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            Semua Riwayat ({leaveRequests.length})
+            {isOwnerOrHRD ? 'Semua Riwayat' : isDeptManager ? 'Riwayat Divisi' : 'Semua Cuti Saya'} ({accessibleLeaveRequests.length})
           </button>
           <button
             onClick={() => setActiveTab('mine')}
@@ -224,7 +240,7 @@ export const LeaveView: React.FC<LeaveViewProps> = ({
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            Cuti Saya ({leaveRequests.filter((r) => r.userId === currentUser.id).length})
+            Cuti Saya ({accessibleLeaveRequests.filter((r) => r.userId === currentUser.id).length})
           </button>
           <button
             onClick={() => setActiveTab('pending')}

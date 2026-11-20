@@ -132,8 +132,27 @@ export const ReimbursementView: React.FC<ReimbursementViewProps> = ({
     onCloseModal();
   };
 
+  // Hierarchy-based data visibility scoping
+  const isOwnerOrFinance =
+    currentUser.roleId === 'role_owner' ||
+    currentUser.roleId === 'role_hrd' ||
+    currentUser.roleId === 'role_finance';
+  const isDeptManager = currentUser.roleId === 'role_manager';
+
+  const accessibleReimbursements = reimbursements.filter((item) => {
+    // Owner, HRD, and Finance have company-wide audit/verification visibility
+    if (isOwnerOrFinance) return true;
+    // Department Manager can only see subordinates in their department or themselves
+    if (isDeptManager) {
+      const applicant = users.find((u) => u.id === item.userId);
+      return (applicant && applicant.departmentId === currentUser.departmentId) || item.userId === currentUser.id;
+    }
+    // Technical Staff / General Employee can ONLY see their own reimbursement claims
+    return item.userId === currentUser.id;
+  });
+
   // Filter list
-  const filteredList = reimbursements.filter((item) => {
+  const filteredList = accessibleReimbursements.filter((item) => {
     if (activeTab === 'mine' && item.userId !== currentUser.id) return false;
     if (
       activeTab === 'pending' &&
@@ -154,11 +173,11 @@ export const ReimbursementView: React.FC<ReimbursementViewProps> = ({
     return true;
   });
 
-  const totalApproved = reimbursements
+  const totalApproved = accessibleReimbursements
     .filter((r) => r.status === 'APPROVED')
     .reduce((s, r) => s + r.amount, 0);
 
-  const totalPending = reimbursements
+  const totalPending = accessibleReimbursements
     .filter(
       (r) => r.status === 'PENDING_MANAGER' || r.status === 'PENDING_FINANCE'
     )
@@ -197,9 +216,11 @@ export const ReimbursementView: React.FC<ReimbursementViewProps> = ({
             Total Klaim Diajukan
           </span>
           <div className="mt-2 text-2xl font-extrabold text-slate-900">
-            {reimbursements.length} Transaksi
+            {accessibleReimbursements.length} Transaksi
           </div>
-          <p className="text-[10px] text-slate-400 mt-1">Seluruh departemen</p>
+          <p className="text-[10px] text-slate-400 mt-1">
+            {isOwnerOrFinance ? 'Seluruh departemen' : isDeptManager ? 'Departemen Anda' : 'Klaim pribadi Anda'}
+          </p>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-amber-200 bg-amber-50/20 shadow-2xs">
@@ -234,7 +255,7 @@ export const ReimbursementView: React.FC<ReimbursementViewProps> = ({
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            Semua ({reimbursements.length})
+            {isOwnerOrFinance ? 'Semua' : isDeptManager ? 'Semua Divisi' : 'Semua Klaim Saya'} ({accessibleReimbursements.length})
           </button>
           <button
             onClick={() => setActiveTab('mine')}
@@ -244,7 +265,7 @@ export const ReimbursementView: React.FC<ReimbursementViewProps> = ({
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            Klaim Saya ({reimbursements.filter((r) => r.userId === currentUser.id).length})
+            Klaim Saya ({accessibleReimbursements.filter((r) => r.userId === currentUser.id).length})
           </button>
           <button
             onClick={() => setActiveTab('pending')}

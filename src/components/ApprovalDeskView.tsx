@@ -55,16 +55,62 @@ export const ApprovalDeskView: React.FC = () => {
 
   const canApprove = hasUserPermission('approve_approval');
 
-  // Filter items
-  const pendingLeaves = leaveRequests.filter(
-    (l) => l.status === 'PENDING_MANAGER' || l.status === 'PENDING_HRD'
-  );
-  const pendingReimbursements = reimbursements.filter(
-    (r) => r.status === 'PENDING_MANAGER' || r.status === 'PENDING_FINANCE'
-  );
-  const pendingOvertime = overtimeRequests.filter(
-    (ot) => ot.status === 'PENDING_MANAGER'
-  );
+  // Hierarchy and role scoping
+  const isOwner = currentUser.roleId === 'role_owner';
+  const isHRD = currentUser.roleId === 'role_hrd';
+  const isFinance = currentUser.roleId === 'role_finance';
+  const isDeptManager = currentUser.roleId === 'role_manager';
+
+  // Visible requests based on corporate hierarchy
+  const scopedLeaveRequests = leaveRequests.filter((l) => {
+    if (isOwner || isHRD) return true;
+    if (isDeptManager) {
+      const applicant = users.find((u) => u.id === l.userId);
+      return (applicant && applicant.departmentId === currentUser.departmentId) || l.userId === currentUser.id;
+    }
+    return l.userId === currentUser.id;
+  });
+
+  const scopedReimbursements = reimbursements.filter((r) => {
+    if (isOwner || isFinance || isHRD) return true;
+    if (isDeptManager) {
+      const applicant = users.find((u) => u.id === r.userId);
+      return (applicant && applicant.departmentId === currentUser.departmentId) || r.userId === currentUser.id;
+    }
+    return r.userId === currentUser.id;
+  });
+
+  const scopedOvertimeRequests = overtimeRequests.filter((ot) => {
+    if (isOwner || isHRD) return true;
+    if (isDeptManager) {
+      const applicant = users.find((u) => u.id === ot.userId);
+      return (applicant && applicant.departmentId === currentUser.departmentId) || ot.userId === currentUser.id;
+    }
+    return ot.userId === currentUser.id;
+  });
+
+  // Actionable pending items strictly scoped to reviewer authority
+  const pendingLeaves = scopedLeaveRequests.filter((l) => {
+    if (l.status !== 'PENDING_MANAGER' && l.status !== 'PENDING_HRD') return false;
+    if (isOwner) return true;
+    if (isHRD) return l.status === 'PENDING_HRD';
+    if (isDeptManager) return l.status === 'PENDING_MANAGER';
+    return false;
+  });
+
+  const pendingReimbursements = scopedReimbursements.filter((r) => {
+    if (r.status !== 'PENDING_MANAGER' && r.status !== 'PENDING_FINANCE') return false;
+    if (isOwner) return true;
+    if (isFinance) return r.status === 'PENDING_FINANCE';
+    if (isDeptManager) return r.status === 'PENDING_MANAGER';
+    return false;
+  });
+
+  const pendingOvertime = scopedOvertimeRequests.filter((ot) => {
+    if (ot.status !== 'PENDING_MANAGER') return false;
+    if (isOwner || isHRD || isDeptManager) return true;
+    return false;
+  });
 
   const handleOpenActionModal = (
     type: 'leave' | 'reimbursement',
@@ -229,7 +275,7 @@ export const ApprovalDeskView: React.FC = () => {
 
             <div className="space-y-3">
               {(activeTab === 'history'
-                ? leaveRequests.filter((l) => l.status === 'APPROVED' || l.status === 'REJECTED')
+                ? scopedLeaveRequests.filter((l) => l.status === 'APPROVED' || l.status === 'REJECTED')
                 : pendingLeaves
               ).length === 0 ? (
                 <div className="py-8 text-center text-slate-400">
@@ -240,7 +286,7 @@ export const ApprovalDeskView: React.FC = () => {
                 </div>
               ) : (
                 (activeTab === 'history'
-                  ? leaveRequests.filter((l) => l.status === 'APPROVED' || l.status === 'REJECTED')
+                  ? scopedLeaveRequests.filter((l) => l.status === 'APPROVED' || l.status === 'REJECTED')
                   : pendingLeaves
                 ).map((req) => {
                   const applicant = users.find((u) => u.id === req.userId);
@@ -351,7 +397,7 @@ export const ApprovalDeskView: React.FC = () => {
 
             <div className="space-y-3">
               {(activeTab === 'history'
-                ? reimbursements.filter((r) => r.status === 'APPROVED' || r.status === 'REJECTED')
+                ? scopedReimbursements.filter((r) => r.status === 'APPROVED' || r.status === 'REJECTED')
                 : pendingReimbursements
               ).length === 0 ? (
                 <div className="py-8 text-center text-slate-400">
@@ -362,7 +408,7 @@ export const ApprovalDeskView: React.FC = () => {
                 </div>
               ) : (
                 (activeTab === 'history'
-                  ? reimbursements.filter((r) => r.status === 'APPROVED' || r.status === 'REJECTED')
+                  ? scopedReimbursements.filter((r) => r.status === 'APPROVED' || r.status === 'REJECTED')
                   : pendingReimbursements
                 ).map((reimb) => {
                   const applicant = users.find((u) => u.id === reimb.userId);
@@ -479,7 +525,7 @@ export const ApprovalDeskView: React.FC = () => {
 
             <div className="space-y-3">
               {(activeTab === 'history'
-                ? overtimeRequests.filter((ot) => ot.status === 'APPROVED' || ot.status === 'REJECTED')
+                ? scopedOvertimeRequests.filter((ot) => ot.status === 'APPROVED' || ot.status === 'REJECTED')
                 : pendingOvertime
               ).length === 0 ? (
                 <div className="py-8 text-center text-slate-400">
@@ -490,7 +536,7 @@ export const ApprovalDeskView: React.FC = () => {
                 </div>
               ) : (
                 (activeTab === 'history'
-                  ? overtimeRequests.filter((ot) => ot.status === 'APPROVED' || ot.status === 'REJECTED')
+                  ? scopedOvertimeRequests.filter((ot) => ot.status === 'APPROVED' || ot.status === 'REJECTED')
                   : pendingOvertime
                 ).map((ot) => {
                   const applicant = users.find((u) => u.id === ot.userId);

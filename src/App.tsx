@@ -309,26 +309,6 @@ function MainApp() {
         onSelectModule={(mod) => setCurrentModule(mod)}
         onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
       />
-
-      {/* Global Quick Persona Notice Bar at Bottom - Always docked and visible without scrolling */}
-      <footer className="no-print shrink-0 sticky bottom-0 z-20 w-full bg-slate-900 text-slate-400 border-t border-slate-800 py-2.5 px-4 text-xs mb-14 lg:mb-0 shadow-lg">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span className="text-slate-300 font-semibold">
-              NexaHR Enterprise v2.4
-            </span>
-            <span className="text-slate-500 hidden sm:inline">&bull;</span>
-            <span className="text-slate-400 hidden sm:inline">
-              Pengguna aktif: {currentUser.name} ({currentRole?.name})
-            </span>
-          </div>
-
-          <div className="text-[11px] text-slate-500">
-            Sistem Informasi HRIS Berbasis Dynamic RBAC &bull; Multi-Level Approvals
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

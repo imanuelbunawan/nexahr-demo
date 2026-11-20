@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { useHRIS } from '../context/HRISContext.tsx';
 import { Reimbursement, ReimbursementCategory } from '../types/index.ts';
-import { formatRupiah, parseRupiah } from '../utils/rbac.ts';
+import {
+  formatRupiah,
+  parseRupiah,
+  isDepartmentManager,
+  isExecutiveOrFinance,
+} from '../utils/rbac.ts';
 import {
   ReceiptText,
   PlusCircle,
@@ -133,11 +138,8 @@ export const ReimbursementView: React.FC<ReimbursementViewProps> = ({
   };
 
   // Hierarchy-based data visibility scoping
-  const isOwnerOrFinance =
-    currentUser.roleId === 'role_owner' ||
-    currentUser.roleId === 'role_hrd' ||
-    currentUser.roleId === 'role_finance';
-  const isDeptManager = currentUser.roleId === 'role_manager';
+  const isOwnerOrFinance = isExecutiveOrFinance(currentUser.roleId);
+  const isDeptManager = isDepartmentManager(currentUser.roleId);
 
   const accessibleReimbursements = reimbursements.filter((item) => {
     // Owner, HRD, and Finance have company-wide audit/verification visibility

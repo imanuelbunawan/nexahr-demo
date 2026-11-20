@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { useHRIS } from '../context/HRISContext.tsx';
 import { LeaveRequest, LeaveType } from '../types/index.ts';
-import { calculateWorkingDays, validateLeaveRequest } from '../utils/rbac.ts';
+import {
+  calculateWorkingDays,
+  validateLeaveRequest,
+  isDepartmentManager,
+  isExecutiveOrHRD,
+} from '../utils/rbac.ts';
 import { OfficialLeaveLetterModal } from './OfficialLeaveLetterModal.tsx';
 import {
   CalendarDays,
@@ -109,8 +114,8 @@ export const LeaveView: React.FC<LeaveViewProps> = ({
   };
 
   // Hierarchy-based data visibility scoping
-  const isOwnerOrHRD = currentUser.roleId === 'role_owner' || currentUser.roleId === 'role_hrd';
-  const isDeptManager = currentUser.roleId === 'role_manager';
+  const isOwnerOrHRD = isExecutiveOrHRD(currentUser.roleId);
+  const isDeptManager = isDepartmentManager(currentUser.roleId);
 
   const accessibleLeaveRequests = leaveRequests.filter((item) => {
     // Owner and HRD have company-wide visibility

@@ -77,6 +77,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccessLogin }) => {
       description: 'Approval cuti/klaim tim IT & tugas kanban (tanpa akses payroll)',
     },
     {
+      userId: 'user_mgr_mkt',
+      roleBadge: 'Dept Manager (MKT)',
+      badgeColor: 'border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300',
+      description: 'Approval cuti/klaim tim Marketing & supervisi kampanye',
+    },
+    {
       userId: 'user_staff_it',
       roleBadge: 'Technical Staff (IT)',
       badgeColor: 'border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300',

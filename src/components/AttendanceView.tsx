@@ -11,6 +11,7 @@ import {
   filterAttendanceRecords,
   validateOvertimeRequest,
 } from '../utils/attendanceUtils.ts';
+import { isDepartmentManager, isExecutiveOrHRD } from '../utils/rbac.ts';
 import {
   Clock,
   Calendar,
@@ -102,8 +103,8 @@ export const AttendanceView: React.FC = () => {
   );
 
   // Hierarchy-based data visibility scoping
-  const isOwnerOrHRD = currentUser.roleId === 'role_owner' || currentUser.roleId === 'role_hrd';
-  const isDeptManager = currentUser.roleId === 'role_manager';
+  const isOwnerOrHRD = isExecutiveOrHRD(currentUser.roleId);
+  const isDeptManager = isDepartmentManager(currentUser.roleId);
 
   const accessibleAttendances = attendances.filter((item) => {
     if (isOwnerOrHRD) return true;

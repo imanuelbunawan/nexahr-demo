@@ -285,7 +285,7 @@ export const HRISProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [roles, setRoles] = useState<Role[]>(() => {
     const loaded = safeLoadStorage(`${STORAGE_KEY_PREFIX}roles`, INITIAL_ROLES);
-    if (!loaded.some((r) => r.id === 'role_finance')) {
+    if (!loaded.some((r) => r.id === 'role_manager_mkt')) {
       return INITIAL_ROLES;
     }
     return loaded;
@@ -299,7 +299,7 @@ export const HRISProvider: React.FC<{ children: React.ReactNode }> = ({
         `${STORAGE_KEY_PREFIX}permissions`,
         null
       );
-      if (parsed && parsed['role_finance']) {
+      if (parsed && parsed['role_manager_mkt']) {
         return parsed;
       }
     } catch {
@@ -308,9 +308,13 @@ export const HRISProvider: React.FC<{ children: React.ReactNode }> = ({
     return INITIAL_ROLE_PERMISSIONS;
   });
 
-  const [users, setUsers] = useState<User[]>(() =>
-    safeLoadStorage(`${STORAGE_KEY_PREFIX}users`, INITIAL_USERS)
-  );
+  const [users, setUsers] = useState<User[]>(() => {
+    const loaded = safeLoadStorage(`${STORAGE_KEY_PREFIX}users`, INITIAL_USERS);
+    if (!loaded.some((u) => u.id === 'user_mgr_mkt')) {
+      return INITIAL_USERS;
+    }
+    return loaded;
+  });
 
   // Active session authentication status (defaults to false to present the Login Page)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {

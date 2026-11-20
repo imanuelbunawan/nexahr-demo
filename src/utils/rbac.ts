@@ -116,6 +116,30 @@ export function validateLeaveRequest(
 }
 
 /**
+ * Check if a role corresponds to any departmental manager tier
+ */
+export function isDepartmentManager(roleId?: string): boolean {
+  if (!roleId) return false;
+  return roleId === 'role_manager' || roleId.startsWith('role_manager');
+}
+
+/**
+ * Check if a role possesses executive or HRD enterprise oversight
+ */
+export function isExecutiveOrHRD(roleId?: string): boolean {
+  if (!roleId) return false;
+  return roleId === 'role_owner' || roleId === 'role_hrd';
+}
+
+/**
+ * Check if a role possesses executive or Finance disbursement oversight
+ */
+export function isExecutiveOrFinance(roleId?: string): boolean {
+  if (!roleId) return false;
+  return roleId === 'role_owner' || roleId === 'role_hrd' || roleId === 'role_finance';
+}
+
+/**
  * Multi-level approval stage progression for Leave:
  * PENDING_MANAGER -> (approve) -> PENDING_HRD -> (approve) -> APPROVED
  * Any reject -> REJECTED

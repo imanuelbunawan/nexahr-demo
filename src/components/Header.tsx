@@ -235,7 +235,7 @@ export const Header: React.FC<HeaderProps> = ({
                         </p>
                       </div>
                       <span className="text-[10px] bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-400 font-semibold px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-900/60">
-                        6 Akun Siap
+                        {users.length} Akun Siap
                       </span>
                     </div>
 

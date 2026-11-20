@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useHRIS } from '../context/HRISContext.tsx';
 import { LeaveRequest, Reimbursement } from '../types/index.ts';
-import { formatRupiah } from '../utils/rbac.ts';
+import { formatRupiah, isDepartmentManager } from '../utils/rbac.ts';
 import {
   ClipboardCheck,
   CalendarDays,
@@ -59,7 +59,7 @@ export const ApprovalDeskView: React.FC = () => {
   const isOwner = currentUser.roleId === 'role_owner';
   const isHRD = currentUser.roleId === 'role_hrd';
   const isFinance = currentUser.roleId === 'role_finance';
-  const isDeptManager = currentUser.roleId === 'role_manager';
+  const isDeptManager = isDepartmentManager(currentUser.roleId);
 
   // Visible requests based on corporate hierarchy
   const scopedLeaveRequests = leaveRequests.filter((l) => {

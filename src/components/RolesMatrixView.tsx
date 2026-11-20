@@ -61,6 +61,7 @@ export const RolesMatrixView: React.FC<RolesMatrixViewProps> = ({
     resetPermissionsToDefault,
     hasUserPermission,
     currentUser,
+    users,
   } = useHRIS();
 
   const isOwner = hasUserPermission('edit_roles');
@@ -78,6 +79,88 @@ export const RolesMatrixView: React.FC<RolesMatrixViewProps> = ({
 
   // Selected role tab for focused matrix view
   const [selectedRoleId, setSelectedRoleId] = useState<string>(roles[0]?.id || 'role_owner');
+  const [roleCategoryFilter, setRoleCategoryFilter] = useState<'all' | 'management' | 'staff'>('all');
+
+  const getRoleMeta = (roleId: string) => {
+    switch (roleId) {
+      case 'role_owner':
+        return {
+          dept: 'Semua Divisi',
+          level: 'C-Level / Board',
+          type: 'management',
+          badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+        };
+      case 'role_hrd':
+        return {
+          dept: 'HR & People Ops',
+          level: 'Director / VP',
+          type: 'management',
+          badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300',
+        };
+      case 'role_finance':
+        return {
+          dept: 'Finance & Accounting',
+          level: 'Head of Division',
+          type: 'management',
+          badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
+        };
+      case 'role_manager':
+        return {
+          dept: 'Technology (ENG)',
+          level: 'Engineering Manager',
+          type: 'management',
+          badgeClass: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300',
+        };
+      case 'role_manager_mkt':
+        return {
+          dept: 'Marketing & Brand',
+          level: 'Marketing Manager',
+          type: 'management',
+          badgeClass: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300',
+        };
+      case 'role_manager_ops':
+        return {
+          dept: 'Operations & Supply',
+          level: 'Operations Manager',
+          type: 'management',
+          badgeClass: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300',
+        };
+      case 'role_staff_it':
+        return {
+          dept: 'Technology (ENG)',
+          level: 'Senior Tech Lead',
+          type: 'staff',
+          badgeClass: 'bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-300',
+        };
+      case 'role_staff_fin':
+        return {
+          dept: 'Finance & Accounting',
+          level: 'Finance Specialist',
+          type: 'staff',
+          badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
+        };
+      case 'role_staff_mkt':
+        return {
+          dept: 'Marketing & Brand',
+          level: 'Growth Specialist',
+          type: 'staff',
+          badgeClass: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300',
+        };
+      default:
+        return {
+          dept: 'Umum / Semua',
+          level: 'Staff Karyawan',
+          type: 'staff',
+          badgeClass: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300',
+        };
+    }
+  };
+
+  const filteredRoles = roles.filter((r) => {
+    if (roleCategoryFilter === 'all') return true;
+    const meta = getRoleMeta(r.id);
+    return meta.type === roleCategoryFilter;
+  });
 
   const handleCreateRole = (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,43 +267,92 @@ export const RolesMatrixView: React.FC<RolesMatrixViewProps> = ({
         </div>
       </div>
 
-      {/* Roles Selector Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
-        {roles.map((r) => {
+      {/* Role Category Filter & Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-100/70 dark:bg-slate-800/60 p-2 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <button
+            onClick={() => setRoleCategoryFilter('all')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+              roleCategoryFilter === 'all'
+                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            Semua Role ({roles.length})
+          </button>
+          <button
+            onClick={() => setRoleCategoryFilter('management')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+              roleCategoryFilter === 'management'
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            Manajemen &amp; Approval ({roles.filter((r) => getRoleMeta(r.id).type === 'management').length})
+          </button>
+          <button
+            onClick={() => setRoleCategoryFilter('staff')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+              roleCategoryFilter === 'staff'
+                ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            Staf &amp; Spesialis ({roles.filter((r) => getRoleMeta(r.id).type === 'staff').length})
+          </button>
+        </div>
+        <span className="text-[11px] text-slate-500 dark:text-slate-400 px-2 font-medium hidden sm:inline">
+          Pilih salah satu role di bawah untuk mengubah izin pada matriks
+        </span>
+      </div>
+
+      {/* Roles Selector Tabs - Grid Card Layout for High Density & Clarity */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
+        {filteredRoles.map((r) => {
           const isSelected = selectedRoleId === r.id;
           const assignedPermCount = (rolePermissions[r.id] || []).length;
+          const meta = getRoleMeta(r.id);
+          const userCount = users.filter((u) => u.roleId === r.id).length;
 
           return (
             <button
               key={r.id}
               onClick={() => setSelectedRoleId(r.id)}
-              className={`px-4 py-2.5 rounded-xl border text-left shrink-0 transition-all flex items-center gap-2.5 ${
+              className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2 cursor-pointer ${
                 isSelected
-                  ? 'bg-white dark:bg-slate-900 border-indigo-600 dark:border-indigo-400 shadow-sm ring-2 ring-indigo-500/20'
-                  : 'bg-white/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-300'
+                  ? 'bg-white dark:bg-slate-900 border-indigo-600 dark:border-indigo-400 shadow-md ring-2 ring-indigo-500/20'
+                  : 'bg-white/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-800'
               }`}
             >
-              <div
-                className={`w-2.5 h-2.5 rounded-full ${
-                  r.color === 'emerald'
-                    ? 'bg-emerald-500'
-                    : r.color === 'blue'
-                    ? 'bg-blue-500'
-                    : r.color === 'indigo'
-                    ? 'bg-indigo-500'
-                    : 'bg-slate-400'
-                }`}
-              />
+              <div className="flex items-start justify-between gap-1 w-full">
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md truncate max-w-[120px] ${meta.badgeClass}`}>
+                  {meta.dept}
+                </span>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0 font-medium">
+                  {userCount} Karyawan
+                </span>
+              </div>
+
               <div>
                 <span
-                  className={`text-xs font-extrabold block ${
+                  className={`text-xs font-black block truncate ${
                     isSelected ? 'text-indigo-900 dark:text-white' : 'text-slate-800 dark:text-slate-200'
                   }`}
+                  title={r.label}
                 >
                   {r.label}
                 </span>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 block">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate mt-0.5">
+                  {meta.level}
+                </span>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-[11px] w-full">
+                <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400">
                   {assignedPermCount} Izin Aktif
+                </span>
+                <span className="text-[10px] text-slate-400 font-medium">
+                  {Math.round((assignedPermCount / ALL_PERMISSIONS.length) * 100)}%
                 </span>
               </div>
             </button>
@@ -233,60 +365,110 @@ export const RolesMatrixView: React.FC<RolesMatrixViewProps> = ({
         const curRole = roles.find((r) => r.id === selectedRoleId);
         if (!curRole) return null;
         const currentPerms = rolePermissions[curRole.id] || [];
+        const roleUsers = users.filter((u) => u.roleId === curRole.id);
+        const meta = getRoleMeta(curRole.id);
 
         return (
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                    {curRole.label}
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded border ${getRoleColorBadge(
+                      curRole.color
+                    )}`}
+                  >
+                    {curRole.name}
+                  </span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${meta.badgeClass}`}>
+                    {meta.level} &bull; {meta.dept}
+                  </span>
+                  {curRole.isSystemRole && (
+                    <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold px-2 py-0.5 rounded">
+                      Role Bawaan Sistem
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-3xl leading-relaxed">
+                  {curRole.description}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="text-right">
+                  <span className="text-[11px] text-slate-400 block font-medium">
+                    Cakupan Otorisasi
+                  </span>
+                  <span className="text-sm font-extrabold text-indigo-700 dark:text-indigo-400">
+                    {currentPerms.length} dari {ALL_PERMISSIONS.length} Hak Akses
+                  </span>
+                </div>
+
+                {!curRole.isSystemRole && isOwner && (
+                  <button
+                    onClick={() => {
+                      if (
+                        confirm(
+                          `Hapus role "${curRole.label}" dan seluruh izinnya?`
+                        )
+                      ) {
+                        deleteRole(curRole.id);
+                        setSelectedRoleId(roles[0].id);
+                      }
+                    }}
+                    className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
+                    title="Hapus Role Kustom"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Role Members Avatar Bar */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
-                <span className="text-base font-extrabold text-slate-900">
-                  {curRole.label}
+                <span className="font-bold text-slate-600 dark:text-slate-300">
+                  Karyawan dengan Role ini ({roleUsers.length}):
                 </span>
-                <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded border ${getRoleColorBadge(
-                    curRole.color
-                  )}`}
-                >
-                  {curRole.name}
-                </span>
-                {curRole.isSystemRole && (
-                  <span className="text-[10px] bg-slate-100 text-slate-600 font-semibold px-2 py-0.5 rounded">
-                    Role Bawaan Sistem
+                <div className="flex items-center -space-x-1.5 overflow-hidden">
+                  {roleUsers.length === 0 ? (
+                    <span className="text-slate-400 italic text-[11px]">Belum ada pengguna ditugaskan</span>
+                  ) : (
+                    roleUsers.map((u) => (
+                      <img
+                        key={u.id}
+                        src={u.avatar}
+                        alt={u.name}
+                        title={`${u.name} (${u.position})`}
+                        className="inline-block w-7 h-7 rounded-full ring-2 ring-white dark:ring-slate-900 object-cover"
+                      />
+                    ))
+                  )}
+                </div>
+                {roleUsers.length > 0 && (
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    ({roleUsers.map((u) => u.name.split(' ')[0]).join(', ')})
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 max-w-2xl">
-                {curRole.description}
-              </p>
-            </div>
 
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="text-right">
-                <span className="text-[11px] text-slate-400 block font-medium">
-                  Cakupan Otorisasi
-                </span>
-                <span className="text-sm font-extrabold text-indigo-700">
-                  {currentPerms.length} dari {ALL_PERMISSIONS.length} Hak Akses
+              <div className="flex items-center gap-2">
+                <div className="w-32 bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-indigo-600 h-full rounded-full transition-all"
+                    style={{
+                      width: `${(currentPerms.length / ALL_PERMISSIONS.length) * 100}%`,
+                    }}
+                  />
+                </div>
+                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                  {Math.round((currentPerms.length / ALL_PERMISSIONS.length) * 100)}% Matriks Terbuka
                 </span>
               </div>
-
-              {!curRole.isSystemRole && isOwner && (
-                <button
-                  onClick={() => {
-                    if (
-                      confirm(
-                        `Hapus role "${curRole.label}" dan seluruh izinnya?`
-                      )
-                    ) {
-                      deleteRole(curRole.id);
-                      setSelectedRoleId(roles[0].id);
-                    }
-                  }}
-                  className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors"
-                  title="Hapus Role Kustom"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
             </div>
           </div>
         );

@@ -37,6 +37,14 @@ import {
   Tag as TagIcon,
   ShieldCheck,
   Check,
+  Play,
+  CheckCircle2,
+  XCircle,
+  RotateCcw,
+  AlertTriangle,
+  UserPlus,
+  UserCheck,
+  Clock,
 } from 'lucide-react';
 
 // Department styling metadata for clear visual division
@@ -167,6 +175,14 @@ export const KanbanView: React.FC = () => {
   // Modal State (Create / Edit)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<KanbanTask | null>(null);
+
+  // Reject Modal State (Alur Review -> Reject dengan Catatan)
+  const [rejectModalTask, setRejectModalTask] = useState<KanbanTask | null>(null);
+  const [rejectNote, setRejectNote] = useState('');
+
+  // Assign PIC Modal State (Tunjuk / Ganti PIC)
+  const [assignModalTask, setAssignModalTask] = useState<KanbanTask | null>(null);
+  const [selectedNewAssigneeId, setSelectedNewAssigneeId] = useState('');
 
   // Form State
   const [formTitle, setFormTitle] = useState('');
@@ -418,6 +434,65 @@ export const KanbanView: React.FC = () => {
     return null;
   };
 
+  // Alur Kerja Interaktif Handlers
+  const handleClaimTask = (taskId: string) => {
+    updateTask(taskId, { assigneeId: currentUser.id });
+  };
+
+  const handleStartProgress = (task: KanbanTask) => {
+    const assigneeId = task.assigneeId || currentUser.id;
+    updateTask(task.id, {
+      status: 'IN_PROGRESS',
+      assigneeId,
+    });
+  };
+
+  const handleRequestReview = (taskId: string) => {
+    updateTaskStatus(taskId, 'IN_REVIEW');
+  };
+
+  const handleOpenRejectModal = (task: KanbanTask) => {
+    setRejectModalTask(task);
+    setRejectNote(task.reviewNote || '');
+  };
+
+  const handleConfirmReject = () => {
+    if (rejectModalTask) {
+      updateTask(rejectModalTask.id, {
+        status: 'IN_PROGRESS',
+        reviewNote: rejectNote.trim() || 'Perlu perbaikan/revisi sebelum disetujui.',
+        reviewedBy: currentUser.id,
+        reviewedAt: new Date().toISOString(),
+      });
+      setRejectModalTask(null);
+      setRejectNote('');
+    }
+  };
+
+  const handleApproveTask = (taskId: string) => {
+    updateTask(taskId, {
+      status: 'DONE',
+      completedAt: new Date().toISOString(),
+      reviewNote: undefined,
+      reviewedBy: currentUser.id,
+      reviewedAt: new Date().toISOString(),
+    });
+  };
+
+  const handleOpenAssignModal = (task: KanbanTask) => {
+    setAssignModalTask(task);
+    setSelectedNewAssigneeId(task.assigneeId || currentUser.id);
+  };
+
+  const handleConfirmAssign = () => {
+    if (assignModalTask && selectedNewAssigneeId) {
+      updateTask(assignModalTask.id, {
+        assigneeId: selectedNewAssigneeId,
+      });
+      setAssignModalTask(null);
+    }
+  };
+
   // Render a single task card with position and interactive tags
   const renderTaskCard = (task: KanbanTask, showDeptBadge: boolean = false) => {
     const assignee = users.find((u) => u.id === task.assigneeId);
@@ -544,6 +619,136 @@ export const KanbanView: React.FC = () => {
             <Calendar className="w-3 h-3" />
             <span>{dueInfo.label}</span>
           </div>
+        </div>
+
+        {/* Review Note Alert if Task was previously Rejected back to In Progress */}
+        {task.status === 'IN_PROGRESS' && task.reviewNote && (
+          <div className="bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 rounded-xl p-2.5 text-xs animate-in fade-in duration-150">
+            <div className="flex items-center gap-1.5 font-bold text-[11px] text-rose-700 dark:text-rose-400">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+              Catatan Revisi dari Reviewer:
+            </div>
+            <p className="mt-1 text-[11px] text-rose-800 dark:text-rose-200 leading-relaxed italic bg-white/60 dark:bg-slate-900/40 p-2 rounded-lg border border-rose-100 dark:border-rose-900/60">
+              "{task.reviewNote}"
+            </p>
+          </div>
+        )}
+
+        {/* Workflow Action Buttons (Alur Kerja Terarah) */}
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 space-y-2">
+          {/* Kolom 1: TODO (Belum Dikerjakan) */}
+          {task.status === 'TODO' && (
+            <div className="space-y-1.5">
+              {!task.assigneeId ? (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleClaimTask(task.id)}
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] flex items-center justify-center gap-1 border border-indigo-200 dark:border-indigo-800 transition-all cursor-pointer"
+                    title="Ambil tugas ini untuk dikerjakan sendiri"
+                  >
+                    <UserCheck className="w-3.5 h-3.5" />
+                    Ambil Tugas
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAssignModal(task)}
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-slate-100 dark:bg-slate-700/70 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-[11px] flex items-center justify-center gap-1 border border-slate-200 dark:border-slate-600 transition-all cursor-pointer"
+                    title="Tunjuk personil lain sebagai PIC"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    Tunjuk PIC
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400 dark:text-slate-500 text-[10px]">
+                    PIC: <strong className="text-slate-700 dark:text-slate-300">{assignee?.name.split(' ')[0]}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAssignModal(task)}
+                    className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline font-semibold flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <UserPlus className="w-2.5 h-2.5" />
+                    Ganti PIC
+                  </button>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => handleStartProgress(task)}
+                className="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm shadow-indigo-600/20 transition-all hover:scale-[1.01] cursor-pointer"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                Mulai Kerjakan
+                <ArrowRight className="w-3.5 h-3.5 ml-auto" />
+              </button>
+            </div>
+          )}
+
+          {/* Kolom 2: IN_PROGRESS (Sedang Berjalan) */}
+          {task.status === 'IN_PROGRESS' && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold px-0.5">
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></span>
+                  Sedang Dikerjakan
+                </span>
+                <span className="text-slate-400 dark:text-slate-500">
+                  {assignee?.name.split(' ')[0] || 'PIC'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRequestReview(task.id)}
+                className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm shadow-amber-500/20 transition-all hover:scale-[1.01] cursor-pointer"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Selesai Dikerjakan & Ajukan Review
+                <ArrowRight className="w-3.5 h-3.5 ml-auto" />
+              </button>
+            </div>
+          )}
+
+          {/* Kolom 3: IN_REVIEW (Tahap Peninjauan & QA) */}
+          {task.status === 'IN_REVIEW' && (
+            <div className="space-y-1.5">
+              <div className="text-[10px] text-amber-700 dark:text-amber-300 font-bold flex items-center gap-1 bg-amber-50 dark:bg-amber-950/60 px-2 py-1 rounded-lg border border-amber-200 dark:border-amber-900/60">
+                <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+                Menunggu Evaluasi / Reviewer
+              </div>
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => handleOpenRejectModal(task)}
+                  className="flex-1 py-1.5 px-2 rounded-xl bg-rose-50 hover:bg-rose-100 active:bg-rose-200 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 font-bold text-xs flex items-center justify-center gap-1 border border-rose-200 dark:border-rose-800 transition-all cursor-pointer"
+                  title="Tolak hasil kerja dan kembalikan dengan catatan revisi"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  Reject / Revisi
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleApproveTask(task.id)}
+                  className="flex-1 py-1.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm shadow-emerald-600/20 transition-all hover:scale-[1.01] cursor-pointer"
+                  title="Setujui hasil kerja dan tandai selesai"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Approve / Selesai
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Kolom 4: DONE (Selesai) */}
+          {task.status === 'DONE' && (
+            <div className="w-full py-1.5 px-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-[11px] flex items-center justify-center gap-1.5 border border-emerald-200 dark:border-emerald-800">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              Tervalidasi Selesai
+            </div>
+          )}
         </div>
 
         {/* Interactive Move & Actions Bar */}
@@ -1457,6 +1662,156 @@ export const KanbanView: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Reject dengan Catatan Revisi */}
+      {rejectModalTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/70 text-rose-600 dark:text-rose-400 flex items-center justify-center border border-rose-200 dark:border-rose-800 shadow-2xs">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Tolak & Minta Revisi Tugas
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    ID Tugas: <strong className="font-mono text-slate-700 dark:text-slate-300">{rejectModalTask.id}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRejectModalTask(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-1">
+              <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                {rejectModalTask.title}
+              </div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <span>PIC:</span>
+                <strong className="text-slate-700 dark:text-slate-300">
+                  {users.find((u) => u.id === rejectModalTask.assigneeId)?.name || 'Belum ada PIC'}
+                </strong>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                Catatan Kesalahan & Instruksi Revisi <span className="text-rose-500">*</span>
+              </label>
+              <textarea
+                rows={3}
+                required
+                value={rejectNote}
+                onChange={(e) => setRejectNote(e.target.value)}
+                placeholder="Contoh: Validasi form belum menangani input kosong dan format tanggal belum sesuai standar. Mohon diperbaiki sebelum deploy..."
+                className="w-full px-3 py-2 text-xs rounded-xl border border-rose-200 dark:border-rose-900/60 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500"
+              />
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                Catatan ini akan tampil jelas di kartu PIC saat tugas dikembalikan ke kolom <strong>Sedang Berjalan</strong>.
+              </p>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setRejectModalTask(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmReject}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/20 transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Kembalikan untuk Direvisi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Tunjuk / Ganti PIC */}
+      {assignModalTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-200 dark:border-indigo-800 shadow-2xs">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Tunjuk Penanggung Jawab (PIC)
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    ID Tugas: <strong className="font-mono text-slate-700 dark:text-slate-300">{assignModalTask.id}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAssignModalTask(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
+              <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                {assignModalTask.title}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                Pilih Karyawan sebagai PIC <span className="text-indigo-500">*</span>
+              </label>
+              <select
+                value={selectedNewAssigneeId}
+                onChange={(e) => setSelectedNewAssigneeId(e.target.value)}
+                className="w-full px-3 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 font-semibold"
+              >
+                <option value="">-- Pilih PIC Pelaksana --</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name} — {u.position} ({departments.find((d) => d.id === u.departmentId)?.code || 'DIV'})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setAssignModalTask(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmAssign}
+                disabled={!selectedNewAssigneeId}
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-indigo-600/20 transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Tetapkan PIC
+              </button>
+            </div>
           </div>
         </div>
       )}

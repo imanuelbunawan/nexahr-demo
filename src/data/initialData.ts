@@ -863,6 +863,19 @@ export const INITIAL_TASKS: KanbanTask[] = [
     createdAt: '2026-10-24T11:30:00Z',
     createdBy: 'user_owner',
   },
+  {
+    id: 'TSK-009',
+    title: 'Optimasi Kecepatan Bundle & Asset Web PWA',
+    description: 'Lakukan code splitting pada modul Vite dan audit performance Core Web Vitals.',
+    status: 'TODO',
+    priority: 'MEDIUM',
+    assigneeId: '',
+    departmentId: 'dept_it',
+    dueDate: '2026-11-12',
+    tags: ['Frontend', 'Performance', 'PWA'],
+    createdAt: '2026-10-24T10:00:00Z',
+    createdBy: 'user_mgr_it',
+  },
 ];
 
 export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [

@@ -211,6 +211,9 @@ export interface KanbanTask {
   createdAt: string;
   completedAt?: string;
   createdBy: string;
+  reviewNote?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
 }
 
 // Audit Logs & Historical Activity Types
